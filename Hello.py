@@ -14,38 +14,44 @@
 
 import streamlit as st
 from streamlit.logger import get_logger
+import requests
+
 
 LOGGER = get_logger(__name__)
 
 
 def run():
-    st.set_page_config(
-        page_title="Hello",
-        page_icon="👋",
-    )
 
-    st.write("# Welcome to Streamlit! 👋")
+# Define the app's layout
+st.title("Places to Visit")
+st.write("This app recommends places to visit in a city of your choice.")
 
-    st.sidebar.success("Select a demo above.")
+# Get the user's input
+city = st.text_input("Enter the city you would like to visit:")
 
-    st.markdown(
-        """
-        Streamlit is an open-source app framework built specifically for
-        Machine Learning and Data Science projects.
-        **👈 Select a demo from the sidebar** to see some examples
-        of what Streamlit can do!
-        ### Want to learn more?
-        - Check out [streamlit.io](https://streamlit.io)
-        - Jump into our [documentation](https://docs.streamlit.io)
-        - Ask a question in our [community
-          forums](https://discuss.streamlit.io)
-        ### See more complex demos
-        - Use a neural net to [analyze the Udacity Self-driving Car Image
-          Dataset](https://github.com/streamlit/demo-self-driving)
-        - Explore a [New York City rideshare dataset](https://github.com/streamlit/demo-uber-nyc-pickups)
-    """
-    )
+# Make a request to the OpenWeatherMap API to get the city's latitude and longitude
+url = "https://api.openweathermap.org/geo/1/direct?q=" + city + "&appid=YOUR_API_KEY"
+response = requests.get(url)
+data = response.json()
 
+# Get the city's latitude and longitude
+latitude = data["lat"]
+longitude = data["lon"]
+
+# Make a request to the Foursquare API to get a list of places of interest in the city
+url = "https://api.foursquare.com/v2/venues/explore?client_id=YOUR_CLIENT_ID&client_secret=YOUR_CLIENT_SECRET&v=20200914&ll=" + str(latitude) + "," + str(longitude) + "&radius=5000&category=tourist_attraction"
+response = requests.get(url)
+data = response.json()
+
+# Get the list of places of interest
+places = data["response"]["groups"][0]["items"]
+
+# Display the list of places of interest to the user
+st.write("Here are some places of interest in " + city + ":")
+for place in places:
+    name = place["name"]
+    category = place["categories"][0]["name"]
+    st.write(name + " (" + category + ")")
 
 if __name__ == "__main__":
     run()
